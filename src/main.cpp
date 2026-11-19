@@ -101,7 +101,7 @@ constexpr int kButtonWidth = 46;
 constexpr int kResizeBorder = 6;
 
 // 版本号：以后每次交付递增这里，并同步 CMakeLists 里的 project VERSION
-constexpr wchar_t kAppVersion[] = L"1.55.0";
+constexpr wchar_t kAppVersion[] = L"1.56.0";
 constexpr char kBuildStamp[] = __DATE__ " " __TIME__;
 
 constexpr UINT kMsgProgress = WM_APP + 1;

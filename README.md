@@ -72,10 +72,11 @@ PopZip.exe -preview      "a.zip" [password] :: 打开预览窗口
 
 ## 资源管理器右键菜单
 
-在 **设置 → 注册右键菜单** 开启（写入 `HKCU\Software\Classes\SystemFileAssociations\<ext>\shell` 与 `Directory\shell`，不修改系统全局、不需要管理员权限）。
+在 **设置 → 注册右键菜单** 开启（写入 `HKCU\Software\Classes\SystemFileAssociations\<ext>\shell`、`*\shell` 与 `Directory\shell`，不修改系统全局、不需要管理员权限）。
 
+- 任意文件：`PopZip 新建压缩包`
 - 压缩包文件：`PopZip 解压到当前文件夹` / `PopZip 解压到同名文件夹`
-- 文件夹：`PopZip 压缩为 ZIP`
+- 文件夹：`PopZip 新建压缩包`
 
 > Windows 11 的第三方传统菜单项位于右键菜单的 **「显示更多选项」**（或 `Shift+F10`）中。
 

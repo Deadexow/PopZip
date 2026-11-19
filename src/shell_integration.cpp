@@ -84,6 +84,34 @@ void UnregisterDirectoryCompress() {
                    L"Software\\Classes\\Directory\\shell\\PopZipCompress");
 }
 
+void RegisterAnyFileCompress() {
+    const std::wstring base =
+        L"Software\\Classes\\*\\shell\\PopZipCompress";
+    HKEY key = nullptr;
+    if (RegCreateKeyExW(HKEY_CURRENT_USER, base.c_str(), 0, nullptr, 0,
+                        KEY_WRITE, nullptr, &key, nullptr) != ERROR_SUCCESS) {
+        return;
+    }
+    SetString(key, nullptr, L"PopZip 新建压缩包");
+    SetString(key, L"Icon", L"\"" + ModulePath() + L"\",0");
+    RegCloseKey(key);
+
+    const std::wstring commandPath = base + L"\\command";
+    HKEY command = nullptr;
+    if (RegCreateKeyExW(HKEY_CURRENT_USER, commandPath.c_str(), 0, nullptr, 0,
+                        KEY_WRITE, nullptr, &command, nullptr) != ERROR_SUCCESS) {
+        return;
+    }
+    SetString(command, nullptr,
+              L"\"" + ModulePath() + L"\" -compress \"%1\"");
+    RegCloseKey(command);
+}
+
+void UnregisterAnyFileCompress() {
+    RegDeleteTreeW(HKEY_CURRENT_USER,
+                   L"Software\\Classes\\*\\shell\\PopZipCompress");
+}
+
 }  // namespace
 
 bool IsShellIntegrationEnabled() {
@@ -115,6 +143,7 @@ void EnableShellIntegration() {
                      L"-extract-to \"%1\"");
     }
     RegisterDirectoryCompress();
+    RegisterAnyFileCompress();
 }
 
 void DisableShellIntegration() {
@@ -123,4 +152,5 @@ void DisableShellIntegration() {
         UnregisterVerb(extension, kToVerb);
     }
     UnregisterDirectoryCompress();
+    UnregisterAnyFileCompress();
 }
