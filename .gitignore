@@ -1,0 +1,8 @@
+build_release/
+test_work/
+bigtest/
+*.o
+*.obj
+*.log
+.codeartsdoer/
+.merkle-snapshot.json
