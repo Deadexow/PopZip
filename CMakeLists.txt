@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.20)
 set(CMAKE_RC_FLAGS "--preprocessor-arg=-BD:/Code/Gcc/libexec/gcc/x86_64-w64-mingw32/16.2.0/")
-project(PopZip VERSION 1.56.0 LANGUAGES C CXX RC)
+project(PopZip VERSION 1.58.0 LANGUAGES C CXX RC)
 
 get_filename_component(_compiler_dir "${CMAKE_C_COMPILER}" DIRECTORY)
 set(CMAKE_OBJCOPY "${_compiler_dir}/objcopy.exe")

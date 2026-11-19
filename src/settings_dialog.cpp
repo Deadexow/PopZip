@@ -36,6 +36,7 @@ struct SettingsState {
     bool previewAutoPlay = false;
     CompressFormat format = CompressFormat::Zip;
     int theme = 0;
+    int themePage = 0;
     int hover = 0;
     bool trackingMouse = false;
     SkyState sky;
@@ -67,6 +68,14 @@ RECT ThemeButtonRect(int index) {
     const int left = 22 + col * 84;
     const int top = 262 + row * 34;
     return RECT{left, top, left + 80, top + 30};
+}
+
+RECT PrevPageRect() {
+    return RECT{350, 236, 388, 258};
+}
+
+RECT NextPageRect() {
+    return RECT{396, 236, 434, 258};
 }
 
 RECT SaveRect() {
@@ -242,8 +251,26 @@ void PaintDialog(HWND hwnd, SettingsState& state) {
     }
 
     DrawTextIn(memoryDc, state.fontSmall, palette.textMuted,
-               RECT{24, 236, 420, 256}, L"主题",
+               RECT{24, 236, 280, 256}, L"主题",
                DT_LEFT | DT_VCENTER | DT_SINGLELINE);
+
+    const int themePages = (31 + 24) / 25;
+    wchar_t pageText[16] = {};
+    wsprintfW(pageText, L"%d/%d", state.themePage + 1, themePages);
+    DrawTextIn(memoryDc, state.fontSmall, palette.textMuted,
+               RECT{280, 236, 340, 256}, pageText,
+               DT_LEFT | DT_VCENTER | DT_SINGLELINE);
+
+    FillRounded(memoryDc, PrevPageRect(), 6,
+                state.hover == 72 ? palette.buttonHover : palette.button);
+    StrokeRounded(memoryDc, PrevPageRect(), 6, palette.border);
+    DrawTextIn(memoryDc, state.fontSmall, palette.text, PrevPageRect(),
+               L"\u2039", DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+    FillRounded(memoryDc, NextPageRect(), 6,
+                state.hover == 73 ? palette.buttonHover : palette.button);
+    StrokeRounded(memoryDc, NextPageRect(), 6, palette.border);
+    DrawTextIn(memoryDc, state.fontSmall, palette.text, NextPageRect(),
+               L"\u203A", DT_CENTER | DT_VCENTER | DT_SINGLELINE);
 
     const wchar_t* themeLabels[] = {
         L"暗夜墨韵", L"皎日白昼", L"星河璀璨", L"深渊黑洞",
@@ -253,9 +280,11 @@ void PaintDialog(HWND hwnd, SettingsState& state) {
         L"星空薄荷", L"月球背面", L"电路板纹", L"深海鲸落",
         L"青空物语", L"星塔夜航", L"暮色天桥", L"夏日云路",
         L"夜海孤舟", L"林间夕桥", L"星漠夜穹", L"霓虹都会",
-        L"风轮苍穹", L"極"};
-    for (int i = 0; i < 30; ++i) {
-        const RECT button = ThemeButtonRect(i);
+        L"风轮苍穹", L"極", L"曼珠沙华"};
+    const int firstTheme = state.themePage * 25;
+    const int lastTheme = std::min(31, firstTheme + 25);
+    for (int i = firstTheme; i < lastTheme; ++i) {
+        const RECT button = ThemeButtonRect(i - firstTheme);
         const bool selected = state.theme == i;
         FillRounded(memoryDc, button, 6,
                     selected ? palette.accent
@@ -333,12 +362,24 @@ int HitTest(const SettingsState& state, int x, int y) {
             return 20 + i;
         }
     }
-    for (int i = 0; i < 30; ++i) {
-        const RECT button = ThemeButtonRect(i);
+    const int firstTheme = state.themePage * 25;
+    const int lastTheme = std::min(31, firstTheme + 25);
+    for (int i = firstTheme; i < lastTheme; ++i) {
+        const RECT button = ThemeButtonRect(i - firstTheme);
         if (x >= button.left && x < button.right && y >= button.top &&
             y < button.bottom) {
             return 40 + i;
         }
+    }
+    const RECT prevPage = PrevPageRect();
+    if (x >= prevPage.left && x < prevPage.right && y >= prevPage.top &&
+        y < prevPage.bottom) {
+        return 72;
+    }
+    const RECT nextPage = NextPageRect();
+    if (x >= nextPage.left && x < nextPage.right && y >= nextPage.top &&
+        y < nextPage.bottom) {
+        return 73;
     }
     const RECT cancel = CancelRect();
     if (x >= cancel.left && x < cancel.right && y >= cancel.top &&
@@ -557,7 +598,22 @@ LRESULT CALLBACK DialogProc(HWND hwnd, UINT message, WPARAM wParam,
             InvalidateRect(hwnd, nullptr, FALSE);
             return 0;
         }
-        if (hit >= 40 && hit < 70) {
+        if (hit == 72) {
+            if (state->themePage > 0) {
+                --state->themePage;
+                InvalidateRect(hwnd, nullptr, FALSE);
+            }
+            return 0;
+        }
+        if (hit == 73) {
+            const int pages = (31 + 24) / 25;
+            if (state->themePage + 1 < pages) {
+                ++state->themePage;
+                InvalidateRect(hwnd, nullptr, FALSE);
+            }
+            return 0;
+        }
+        if (hit >= 40 && hit < 71) {
             state->theme = hit - 40;
             InvalidateRect(hwnd, nullptr, FALSE);
             return 0;
@@ -664,6 +720,7 @@ void OpenSettingsWindow(HWND owner) {
     state.previewAutoPlay = g_previewAutoPlay;
     state.format = g_defaultCompressFormat;
     state.theme = g_theme;
+    state.themePage = state.theme / 25;
 
     RECT parentRect{};
     int x = 0;

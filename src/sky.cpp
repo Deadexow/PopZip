@@ -872,6 +872,98 @@ void DrawWhale(HDC dc, const SkyState& state, int width, int height) {
                  static_cast<int>(height * 0.02), RGB(160, 172, 184), 2);
 }
 
+void DrawHiganbana(HDC dc, const SkyState& state, int width, int height) {
+    VGradient(dc, width, height, RGB(20, 5, 7), RGB(58, 12, 14));
+
+    for (int i = 0; i < 3; ++i) {
+        FillRadialGlow(dc, width * (18 + i * 32) / 100,
+                       height * 82 / 100, width / 3, RGB(110, 14, 20), 80);
+    }
+
+    const double t = state.time;
+    const int baseY = height * 97 / 100;
+    for (int i = 0; i < 34; ++i) {
+        const double fx = width * (3 + (i * 97) % 94) / 100.0;
+        const double depth = 0.42 + (i % 8) * 0.075;
+        const double flowerY = height * (0.95 - depth * 0.46);
+        const double sway =
+            std::sin(t * 0.7 + i * 0.73) * (2.0 + depth * 3.5);
+        const int cx = static_cast<int>(fx + sway);
+        const int cy = static_cast<int>(flowerY);
+        const int scale = static_cast<int>(5 + depth * 9);
+
+        HPEN stemPen = CreatePen(PS_SOLID, 2, RGB(58, 26, 18));
+        HGDIOBJ oldPen = SelectObject(dc, stemPen);
+        MoveToEx(dc, cx, baseY, nullptr);
+        LineTo(dc, cx - static_cast<int>(sway * 0.3), cy + scale);
+        SelectObject(dc, oldPen);
+        DeleteObject(stemPen);
+
+        for (int p = 0; p < 6; ++p) {
+            const double a = -kPi / 2.0 + p * (2.0 * kPi / 6.0) +
+                             std::sin(t * 0.5 + i) * 0.06;
+            const double len =
+                scale * (1.7 + 0.25 * std::sin(p * 1.7 + i));
+            const int tipX = cx + static_cast<int>(std::cos(a) * len);
+            const int tipY = cy + static_cast<int>(std::sin(a) * len);
+            const double nx = std::cos(a + kPi / 2.0) * scale * 0.34;
+            const double ny = std::sin(a + kPi / 2.0) * scale * 0.34;
+            POINT pts[4] = {
+                {cx, cy},
+                {cx + static_cast<int>(nx), cy + static_cast<int>(ny)},
+                {tipX, tipY},
+                {cx - static_cast<int>(nx), cy - static_cast<int>(ny)}};
+            const COLORREF color =
+                LerpColor(RGB(236, 62, 52), RGB(132, 18, 20), depth * 0.6);
+            HBRUSH brush = CreateSolidBrush(color);
+            HPEN edge = CreatePen(PS_SOLID, 1, RGB(255, 120, 96));
+            HGDIOBJ ob = SelectObject(dc, brush);
+            HGDIOBJ op = SelectObject(dc, edge);
+            Polygon(dc, pts, 4);
+            SelectObject(dc, op);
+            SelectObject(dc, ob);
+            DeleteObject(brush);
+            DeleteObject(edge);
+        }
+
+        HPEN stamen = CreatePen(PS_SOLID, 1, RGB(226, 84, 66));
+        oldPen = SelectObject(dc, stamen);
+        for (int s = 0; s < 7; ++s) {
+            const double a = -kPi / 2.0 + (s - 3) * 0.24;
+            MoveToEx(dc, cx, cy, nullptr);
+            for (int seg = 1; seg <= 3; ++seg) {
+                const double dd = scale * (1.4 + seg * 0.6);
+                LineTo(dc, cx + static_cast<int>(std::cos(a) * dd + sway * 0.2),
+                       cy + static_cast<int>(std::sin(a) * dd));
+            }
+            SetPixel(dc, cx + static_cast<int>(std::cos(a) * scale * 3.2),
+                     cy + static_cast<int>(std::sin(a) * scale * 3.2),
+                     RGB(255, 214, 160));
+        }
+        SelectObject(dc, oldPen);
+        DeleteObject(stamen);
+    }
+
+    for (const SkyPetal& petal : state.petals) {
+        POINT pts[4];
+        for (int k = 0; k < 4; ++k) {
+            const double a = petal.angle + k * (kPi / 2.0);
+            const double radius = (k % 2 == 0) ? petal.size : petal.size * 0.45;
+            pts[k].x = static_cast<LONG>(petal.x + std::cos(a) * radius);
+            pts[k].y = static_cast<LONG>(petal.y + std::sin(a) * radius);
+        }
+        HBRUSH brush = CreateSolidBrush(RGB(198, 42, 44));
+        HPEN pen = CreatePen(PS_SOLID, 1, RGB(240, 96, 80));
+        HGDIOBJ ob = SelectObject(dc, brush);
+        HGDIOBJ op = SelectObject(dc, pen);
+        Polygon(dc, pts, 4);
+        SelectObject(dc, op);
+        SelectObject(dc, ob);
+        DeleteObject(brush);
+        DeleteObject(pen);
+    }
+}
+
 void DrawCream(HDC dc, const SkyState& state, int width, int height) {
     VGradient(dc, width, height, RGB(252, 246, 234), RGB(244, 226, 200));
 
@@ -2189,6 +2281,9 @@ void EnsureSky(SkyState& state, int width, int height) {
     case 29: // 極：云雾
         makePetals(10, 50.0f, 130.0f, 0.0f, 0.0f, true);
         break;
+    case 30: // 曼珠沙华：飘落花瓣
+        makePetals(20, 3.0f, 6.0f, 0.6f, 1.4f, true);
+        break;
     case 20: { // 青空物语：积雨云 + 飞鸟
         makePetals(20, 26.0f, 76.0f, 0.0f, 0.0f, true);
         for (SkyPetal& cloud : state.petals) {
@@ -2436,6 +2531,21 @@ void UpdateSky(SkyState& state, int width, int height) {
         }
         break;
     }
+    case 30: { // 曼珠沙华：花瓣飘落
+        for (SkyPetal& petal : state.petals) {
+            petal.x += petal.vx * 0.4f +
+                       std::sin((state.time + petal.phase) * 0.03f) * 0.6f;
+            petal.y += petal.vy;
+            petal.angle += petal.spin;
+            if (petal.y > height + 20.0f) {
+                petal.y = -20.0f;
+                petal.x = static_cast<float>(rand() % std::max(1, width));
+            }
+            if (petal.x < -20.0f) petal.x = static_cast<float>(width) + 15.0f;
+            if (petal.x > width + 20.0f) petal.x = -15.0f;
+        }
+        break;
+    }
     case 20: { // 青空物语：云漂移 + 飞鸟横越 + 晚霞拖尾
         for (SkyPetal& cloud : state.petals) {
             if (cloud.shade == 2) {
@@ -2569,6 +2679,9 @@ void DrawSky(HDC dc, const SkyState& state, int width, int height) {
         break;
     case 29:
         DrawChampion(dc, state, width, height);
+        break;
+    case 30:
+        DrawHiganbana(dc, state, width, height);
         break;
     case 20:
         DrawAnimeSky(dc, state, width, height);

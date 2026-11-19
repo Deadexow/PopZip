@@ -551,6 +551,24 @@ inline ThemePalette GetThemePalette(int theme) {
         palette.footer = RGB(238, 235, 226);
         palette.footerLine = RGB(214, 208, 198);
         break;
+    case 30: // 曼珠沙华
+        palette.background = RGB(22, 6, 8);
+        palette.titleBar = RGB(30, 10, 12);
+        palette.panel = RGB(44, 16, 18);
+        palette.panelDeep = RGB(28, 9, 11);
+        palette.text = RGB(255, 232, 232);
+        palette.textSecondary = RGB(232, 180, 176);
+        palette.textMuted = RGB(190, 130, 128);
+        palette.border = RGB(110, 44, 44);
+        palette.button = RGB(56, 22, 24);
+        palette.buttonHover = RGB(82, 32, 34);
+        palette.accent = RGB(226, 64, 58);
+        palette.accentHover = RGB(250, 92, 80);
+        palette.success = RGB(150, 220, 160);
+        palette.danger = RGB(250, 120, 100);
+        palette.footer = RGB(28, 9, 11);
+        palette.footerLine = RGB(78, 26, 28);
+        break;
     default: // 0 暗夜墨韵
         palette.background = RGB(24, 26, 31);
         palette.titleBar = RGB(30, 33, 39);
